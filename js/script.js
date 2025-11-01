@@ -23,12 +23,12 @@ const firebaseConfig = {
     storageBucket: "altungasigorta-3c86f.firebasestorage.app",
     messagingSenderId: "60208483315",
     appId: "1:60208483315:web:94fcc113e250933ccda086",
-    measurementId: "G-MJSWWH2E09" // Yeni eklenen measurementId
+    measurementId: "G-MJSWWH2E09" 
 };
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const db = getFirestore(app); // v9/v10 stili
+const db = getFirestore(app); 
 
 
 
@@ -167,6 +167,9 @@ const DOM = {
     addPaymentBtn: document.getElementById('addPaymentBtn'),
     closeDebtDetailBtn: document.getElementById('closeDebtDetailBtn'),
     // *****************************************
+    
+    // *** ZORUNLU GİRİŞ VE UYGULAMA KİLİDİ ***
+    appLocker: document.getElementById('appLocker'), // <-- EKLENDİ
 };
 
 // State Değişkenleri
@@ -2338,7 +2341,7 @@ function updateAdminSettingsVisibility() {
     }
 }
 
-// Admin Giriş (Orijinal Koddan Alındı)
+// Admin Giriş (KRİTİK GÜNCELLEME: Kilidi Kaldırma Eklendi)
 function handleAdminLogin() {
     const usernameInput = DOM.adminUsername.value.trim();
     const passwordInput = DOM.adminPassword.value.trim();
@@ -2351,12 +2354,21 @@ function handleAdminLogin() {
         if (usernameInput === decodedUsername && passwordInput === decodedPassword) {
             closeModal(DOM.adminLoginModal);
             ADMIN_LOGGED_IN = true;
-            localStorage.setItem('adminLoggedIn', 'true'); // KRİTİK: LOCALSTORAGE'A YAZILDI
+            localStorage.setItem('adminLoggedIn', 'true'); 
             DOM.adminUsername.value = '';
             DOM.adminPassword.value = '';
+            
+            // YENİ: Kilidi kaldır ve iptal butonunu göster
+            if (DOM.appLocker) DOM.appLocker.style.display = 'none'; 
+            if (DOM.cancelAdminLogin) DOM.cancelAdminLogin.style.display = 'inline-flex'; 
+
             updateAdminSettingsVisibility();
             showToast('success', 'Yönetici girişi başarılı.');
-            toggleSettingsMenu(true);
+
+            // Başarılı girişten sonra veriyi yükle ve uyarıları göster
+            loadData(); 
+            showWarnings(isInitialLoad && localStorage.getItem('warningModalOpened') === 'false');
+
         } else {
             if(DOM.loginError) DOM.loginError.textContent = 'Kullanıcı adı veya şifre hatalı.';
             if(DOM.loginError) DOM.loginError.style.display = 'block';
@@ -2371,17 +2383,32 @@ function handleAdminLogin() {
     }
 }
 
+// Admin Logout (KRİTİK GÜNCELLEME: Kilit Ekranına Dönüş Eklendi)
 function handleAdminLogout() {
     ADMIN_LOGGED_IN = false;
     localStorage.removeItem('adminLoggedIn');
-    toggleSettingsMenu(false); // Ayarlar menüsünü kapat
-    updateAdminSettingsVisibility(); // Admin butonlarını gizle
-    showToast('info', 'Yönetici oturumu kapatıldı. Sayfa yenileniyor...');
+    toggleSettingsMenu(false); 
+    updateAdminSettingsVisibility(); 
+    showToast('info', 'Yönetici oturumu kapatıldı. Uygulama kilitleniyor...');
     
-    // Sayfayı yenileyerek tüm admin kontrollerinin sıfırlanmasını sağla
+    // Sayfayı yenilemek yerine kilit ekranına dön
     setTimeout(() => {
-        location.reload();
-    }, 1500); // Toast mesajının görünmesi için kısa bir bekleme
+        // 1. Kilidi tekrar uygula
+        if (DOM.appLocker) DOM.appLocker.style.display = 'block'; 
+        
+        // 2. Zorunlu giriş için iptal butonunu tekrar gizle
+        if (DOM.cancelAdminLogin) DOM.cancelAdminLogin.style.display = 'none'; 
+        
+        // 3. Admin modalını aç
+        openModal(DOM.adminLoginModal);
+        
+        // 4. Kullanıcı adı alanını temizle ve focus yap
+        DOM.adminUsername.value = '';
+        DOM.adminPassword.value = '';
+        if(DOM.loginError) DOM.loginError.style.display = 'none';
+        if(DOM.adminUsername) DOM.adminUsername.focus();
+        
+    }, 1500); 
 }
 
 
@@ -2437,7 +2464,7 @@ async function showWarnings(shouldOpenModal = false) {
         // Modal açma mantığı
         if (shouldOpenModal) {
              const hasBeenOpened = localStorage.getItem('warningModalOpened');
-             // İlk yüklemede ve daha önce hiç açılmadıysa VEYA manuel tıklamada aç
+             // İlk yüklemede ve daha önce hiç açılmadıysa VEYSE manuel tıklamada aç
              const shouldOpenNow = (isInitialLoad && hasBeenOpened === 'false') || (!isInitialLoad && warnings.length > 0);
 
             if (warnings.length > 0 && shouldOpenNow) {
@@ -3298,7 +3325,7 @@ async function addPayment() {
     }
 
   	let item = null;
-  	let itemSource = 'getDoc'; // Kaynağı 'getDoc' olarak sabitliyoruz
+  	let itemSource = 'getDoc'; 
 
   	// 1. STATE KONTROLÜ KALDIRILDI.
   	console.log("addPayment: State kontrolü atlanıyor, sunucudan veri çekiliyor...");
@@ -3343,7 +3370,7 @@ async function addPayment() {
         	tahsilatlar: currentTahsilatlar
       	});
       	
-      	// State güncelleme satırları kaldırıldı (çünkü state artık kullanılmıyor)
+      	// State güncelleme satırları kaldırıldı 
       	
       	showToast('success', `${formatCurrency(amount)} ₺ tahsilat kaydedildi. Kalan borç: ${formatCurrency(newBorc)} ₺`);
       	
@@ -3382,7 +3409,7 @@ async function deletePayment(docId, tarih, tutar) {
     if (!await showConfirm("Bu tahsilat kaydını silmek istediğinize emin misiniz? Kalan borç miktarı artırılacaktır.")) return;
 
   	let item = null;
-  	let itemSource = 'getDoc'; // Kaynağı 'getDoc' olarak sabitliyoruz
+  	let itemSource = 'getDoc'; 
 
   	// 1. STATE KONTROLÜ KALDIRILDI.
   	console.log("deletePayment: State kontrolü atlanıyor, sunucudan veri çekiliyor...");
@@ -3465,6 +3492,28 @@ async function deletePayment(docId, tarih, tutar) {
 // --- Olay Dinleyicileri ---
 
 document.addEventListener('DOMContentLoaded', async () => {
+    
+    // 1. KİLİT MEKANİZMASI VE ZORUNLU GİRİŞ BAŞLANGICI
+    if (!ADMIN_LOGGED_IN) {
+        if (DOM.appLocker) DOM.appLocker.style.display = 'block'; // Uygulama arayüzünü kilitler
+        
+        // ZORUNLU İLK GİRİŞ İÇİN İptal Butonunu Gizle (CSS'te de gizleniyor, bu bir güvenlik katmanı)
+        if (DOM.cancelAdminLogin) DOM.cancelAdminLogin.style.display = 'none'; 
+        
+        // Admin Giriş Modalını aç
+        openModal(DOM.adminLoginModal);
+        
+        // Modal içeriği yüklenene kadar bekleyip inputa focus yap
+        setTimeout(() => {
+            if(DOM.adminUsername) DOM.adminUsername.focus();
+        }, 100);
+    } else {
+        // Zaten giriş yapılmışsa kilidi kaldır
+        if (DOM.appLocker) DOM.appLocker.style.display = 'none'; 
+    }
+    // 1. KİLİT MEKANİZMASI VE ZORUNLU GİRİŞ SONU
+    
+    
     // DOM elementlerinin varlığını kontrol ederek hata verme riskini azaltıyoruz.
     populateActiveFilterDropdowns(); // KRİTİK: Yeni aktif filtreleme fonksiyonu
     if (DOM.reportMonth && DOM.reportYear) populateReportDropdowns(DOM.reportMonth, DOM.reportYear);
@@ -3755,29 +3804,33 @@ document.addEventListener('DOMContentLoaded', async () => {
             toggleSettingsMenu(false);
         }
     });
+    
+    // Uygulama kilitli değilse (ADMIN_LOGGED_IN true ise) yüklemeyi başlat
+    if (ADMIN_LOGGED_IN) {
+        // --- Sayfa Yükleme Sırası ---
+        // Eğer localstorage'da warningModalOpened hiç ayarlanmadıysa, ilk kez açılması için false yap
+        if (localStorage.getItem('warningModalOpened') === null) {
+            localStorage.setItem('warningModalOpened', 'false');
+            isInitialLoad = true;
+        } else {
+            isInitialLoad = false;
+        }
+        
+        updateAdminSettingsVisibility(); // Admin durumunu hemen kontrol et
 
-    // --- Sayfa Yükleme Sırası ---
-    // Eğer localstorage'da warningModalOpened hiç ayarlanmadıysa, ilk kez açılması için false yap
-    if (localStorage.getItem('warningModalOpened') === null) {
-        localStorage.setItem('warningModalOpened', 'false');
-        isInitialLoad = true;
-    } else {
-        isInitialLoad = false;
+        showToast('info', 'Veriler yükleniyor...');
+        await loadData();
+        // İlk yüklemede (tarayıcıda ilk kez açıldıysa) zil modalını aç
+        await showWarnings(isInitialLoad && localStorage.getItem('warningModalOpened') === 'false');
+        
+        showToast('success', 'Veriler başarıyla yüklendi.');
+        
+        // Eğer ilk yükleme ise ve modal açılmadıysa (uyarı yoksa), bayrağı kalıcı olarak true yap
+        if(isInitialLoad) {
+            localStorage.setItem('warningModalOpened', 'true');
+        }
     }
-    
-    updateAdminSettingsVisibility(); // Admin durumunu hemen kontrol et
 
-    showToast('info', 'Veriler yükleniyor...');
-    await loadData();
-    // İlk yüklemede (tarayıcıda ilk kez açıldıysa) zil modalını aç
-    await showWarnings(isInitialLoad && localStorage.getItem('warningModalOpened') === 'false');
-    
-    showToast('success', 'Veriler başarıyla yüklendi.');
-    
-    // Eğer ilk yükleme ise ve modal açılmadıysa (uyarı yoksa), bayrağı kalıcı olarak true yap
-    if(isInitialLoad) {
-        localStorage.setItem('warningModalOpened', 'true');
-    }
 
 });
 
@@ -3824,4 +3877,3 @@ window.deletePayment = deletePayment;
 window.handleRefundAmountFocus = handleRefundAmountFocus;
 window.handleRefundAmountBlur = handleRefundAmountBlur;
 window.handleRefundAmountInput = handleRefundAmountInput;
-v
