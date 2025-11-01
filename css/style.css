@@ -1611,3 +1611,30 @@ table.data-table.small-table td {
     background-color: var(--brown-hover);
 }
 /* === VERESİYE STİLLERİ SONU === */
+/* === YENİ: UYGULAMA KİLİDİ STİLİ === */
+.app-locker {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    /* Ana arka plan renginizle eşleşir */
+    background-color: var(--background-color); 
+    
+    /* * Bu z-index, kilidin #adminLoginModal (1005) ALTINDA,
+     * ama zil (1000) ve ayarlar butonu (999) gibi
+     * diğer her şeyin ÜSTÜNDE olmasını sağlar.
+     */
+    z-index: 1002;
+    
+    /* Başlangıçta JS tarafından kontrol edilecek */
+    display: none; 
+}
+
+/* * YENİ: Açılışta zorunlu giriş için 
+ * admin modalındaki "İptal" butonunu varsayılan olarak gizler.
+ */
+#adminLoginModal #cancelAdminLogin {
+    display: none;
+}
+/* === KİLİT STİLİ SONU === */
