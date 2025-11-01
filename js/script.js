@@ -1487,10 +1487,10 @@ function handleWhatsApp(name, plate, bitisDate, policeType, phone) {
     } catch(e) { console.warn("WhatsApp için tarih hatası:", bitisDate); }
 
     const kalan = !isNaN(diffDays) && diffDays >= 0 ? diffDays : '?';
-    const agentName = "SİVAS GÜVEN SİGORTA - MESUT CİN";
+    const agentName = "ALTUNGA SİGORTA - MEHMET FIRAT";
     
     // *** YENİ EKLENEN SATIR ***
-    const agentPhone = "+905464981333"; // Sizin iletişim numaranız
+    const agentPhone = "+905550346580"; // Sizin iletişim numaranız
     // *** DEĞİŞİKLİK SONU ***
 
     let dynamicSubject = "";
