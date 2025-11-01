@@ -33,7 +33,7 @@ const db = getFirestore(app); // v9/v10 stili
 
 
 const ADMIN_USERNAME_ENCRYPTED = "YWRtaW4=";      
-const ADMIN_PASSWORD_ENCRYPTED = "QWx0dW5nYTU4";  
+const ADMIN_PASSWORD_ENCRYPTED = "QWx0dW5nYTU4"; 
 
 
 
@@ -177,8 +177,8 @@ let selectedIdsForBulkDelete = new Set();
 let offers = [];
 let currentAgencyReportData = {};
 let currentAgencyReportAgencies = [];
-// KRİTİK: Admin oturum kalıcılığı (Başlangıç değeri DOMContentLoaded içinde atanacak)
-let ADMIN_LOGGED_IN = false; 
+// KRİTİK: Admin oturum kalıcılığı için localStorage kontrolü
+let ADMIN_LOGGED_IN = localStorage.getItem('adminLoggedIn') === 'true'; 
 let isSettingsMenuOpen = false;
 // KRİTİK: Zil modalının sadece ilk yüklemede açılması için bayrak
 let isInitialLoad = localStorage.getItem('warningModalOpened') !== 'true'; 
@@ -874,8 +874,8 @@ async function renderArchiveAccordion(data, isCancelled = false) {
         });
 
              if (monthData.length === 0 && tableBody.parentNode.tagName === 'TABLE') {
-                  const colspan = tableBody.previousElementSibling?.rows[0]?.cells.length || 12;
-                  tableBody.innerHTML = `<tr><td colspan="${colspan}" style="text-align:center; padding: 15px;">Bu grup için kayıt bulunamadı.</td></tr>`;
+                 const colspan = tableBody.previousElementSibling?.rows[0]?.cells.length || 12;
+                 tableBody.innerHTML = `<tr><td colspan="${colspan}" style="text-align:center; padding: 15px;">Bu grup için kayıt bulunamadı.</td></tr>`;
              }
     }
     updateBulkDeleteButtonState();
@@ -973,61 +973,61 @@ async function filterData(queryText) {
 
 // sortData (DÜZELTİLDİ: 'return sorted;' eklendi)
 function sortData(data, column, direction) {
-    const sorted = [...data].sort((a, b) => {
-        const valA = a[column];
-        const valB = b[column];
-        let primaryComparison = 0;
+    const sorted = [...data].sort((a, b) => {
+        const valA = a[column];
+        const valB = b[column];
+        let primaryComparison = 0;
 
-        // 1. Birincil Karşılaştırma
-        if (column === 'pbitis') {
-            let timeA = 0, timeB = 0;
-            try { timeA = new Date(valA || 0).getTime(); if(isNaN(timeA)) timeA = 0; } catch(e) {}
-            try { timeB = new Date(valB || 0).getTime(); if(isNaN(timeB)) timeB = 0; } catch(e) {}
-            
-            if (timeA === 0 && timeB !== 0) primaryComparison = 1;
-            else if (timeB === 0 && timeA !== 0) primaryComparison = -1;
-            else primaryComparison = timeA - timeB;
+        // 1. Birincil Karşılaştırma
+        if (column === 'pbitis') {
+            let timeA = 0, timeB = 0;
+            try { timeA = new Date(valA || 0).getTime(); if(isNaN(timeA)) timeA = 0; } catch(e) {}
+            try { timeB = new Date(valB || 0).getTime(); if(isNaN(timeB)) timeB = 0; } catch(e) {}
+            
+            if (timeA === 0 && timeB !== 0) primaryComparison = 1;
+            else if (timeB === 0 && timeA !== 0) primaryComparison = -1;
+            else primaryComparison = timeA - timeB;
 
-        } else if (column === 'tutar') {
-            const numA = valA || 0;
-            const numB = valB || 0;
-            primaryComparison = numA - numB;
-        } else {
-            // 'isim', 'policeType' vb. için GÜVENLİ sıralama
-            const strA = String(valA || '');
-            const strB = String(valB || '');
-            
-            if (strA < strB) primaryComparison = -1;
-            else if (strA > strB) primaryComparison = 1;
-            else primaryComparison = 0;
-        }
+        } else if (column === 'tutar') {
+            const numA = valA || 0;
+            const numB = valB || 0;
+            primaryComparison = numA - numB;
+        } else {
+            // 'isim', 'policeType' vb. için GÜVENLİ sıralama
+            const strA = String(valA || '');
+            const strB = String(valB || '');
+            
+            if (strA < strB) primaryComparison = -1;
+            else if (strA > strB) primaryComparison = 1;
+            else primaryComparison = 0;
+        }
 
-        // 2. İkincil Karşılaştırma (Eğer birincil sonuç 0, yani "eşit" ise)
-        if (primaryComparison === 0) {
-            
-            // 'pbitis'e göre sıralarken isimleri karşılaştır
-            if (column !== 'isim') {
-                const strA = String(a.isim || '');
-                const strB = String(b.isim || '');
-                if (strA < strB) return -1;
-                if (strA > strB) return 1;
-                return 0;
-            } 
-            
-            // 'isim'e göre sıralarken tarihleri karşılaştır
-            else {
-                let timeA = 0, timeB = 0;
-                try { timeA = new Date(a.pbitis || 0).getTime(); if(isNaN(timeA)) timeA = 0; } catch(e) {}
-                try { timeB = new Date(b.pbitis || 0).getTime(); if(isNaN(timeB)) timeB = 0; } catch(e) {}
-                
-                if (timeA === 0 && timeB !== 0) return 1;
-                if (timeB === 0 && timeA !== 0) return -1;
-                return timeA - timeB;
-            }
-        }
-        
-        return direction === 'asc' ? primaryComparison : -primaryComparison;
-    });
+        // 2. İkincil Karşılaştırma (Eğer birincil sonuç 0, yani "eşit" ise)
+        if (primaryComparison === 0) {
+            
+            // 'pbitis'e göre sıralarken isimleri karşılaştır
+            if (column !== 'isim') {
+                const strA = String(a.isim || '');
+                const strB = String(b.isim || '');
+                if (strA < strB) return -1;
+                if (strA > strB) return 1;
+                return 0;
+            } 
+            
+            // 'isim'e göre sıralarken tarihleri karşılaştır
+            else {
+                let timeA = 0, timeB = 0;
+                try { timeA = new Date(a.pbitis || 0).getTime(); if(isNaN(timeA)) timeA = 0; } catch(e) {}
+                try { timeB = new Date(b.pbitis || 0).getTime(); if(isNaN(timeB)) timeB = 0; } catch(e) {}
+                
+                if (timeA === 0 && timeB !== 0) return 1;
+                if (timeB === 0 && timeA !== 0) return -1;
+                return timeA - timeB;
+            }
+        }
+        
+        return direction === 'asc' ? primaryComparison : -primaryComparison;
+    });
 
     // *** EKLENMESİ GEREKEN SATIR BURASI ***
     return sorted; 
@@ -1291,75 +1291,75 @@ async function deleteItem(docId) {
 
 // unarchiveItem (GÜNCELLENDİ: Arşivden Geri Çekme Mantığı Düzeltildi)
 async function unarchiveItem(docId) {
-    if (!docId) return;
-    if (!await showConfirm("Bu kaydı aktif listeye geri taşımak istediğinize emin misiniz?")) return;
+    if (!docId) return;
+    if (!await showConfirm("Bu kaydı aktif listeye geri taşımak istediğinize emin misiniz?")) return;
 
-    try {
-        const docRef = doc(db, "policies", docId);
-        const docSnap = await getDoc(docRef);
+    try {
+        const docRef = doc(db, "policies", docId);
+        const docSnap = await getDoc(docRef);
 
-        if (!docSnap.exists()) {
-            showToast('error', 'Kayıt bulunamadı.');
-            await loadData();
-            return;
-        }
+        if (!docSnap.exists()) {
+            showToast('error', 'Kayıt bulunamadı.');
+            await loadData();
+            return;
+        }
 
-        const item = docSnap.data();
-        let updateData = { 
-            status: 'active',
-            originalReportDate: item.originalReportDate // Rapor tarihini her zaman koru
-        };
+        const item = docSnap.data();
+        let updateData = { 
+            status: 'active',
+            originalReportDate: item.originalReportDate // Rapor tarihini her zaman koru
+        };
 
-        // *** DÜZELTME BAŞLANGICI ***
-        // Düzeltilmiş Mantık:
-        if (item.pbitis && typeof item.pbitis === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(item.pbitis)) {
-            try {
+        // *** DÜZELTME BAŞLANGICI ***
+        // Düzeltilmiş Mantık:
+        if (item.pbitis && typeof item.pbitis === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(item.pbitis)) {
+            try {
                 // Arşivdeki hatırlatma tarihini (örn: 2026-10-31) al
-                const parts = item.pbitis.split('-'); 
-                const reminderDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 12, 0, 0);
-        
-                if (isNaN(reminderDate.getTime())) {
-                    throw new Error('Arşivdeki pbitis tarihi geçersiz');
-                }
-                
-                // 1 Yıl çıkararak Orijinal Poliçe Bitiş Tarihine dön (örn: 2025-10-31)
-                reminderDate.setFullYear(reminderDate.getFullYear() - 1);
-        
-                const originalYear = reminderDate.getFullYear();
-                const originalMonth = String(reminderDate.getMonth() + 1).padStart(2, '0');
-                const originalDay = String(reminderDate.getDate()).padStart(2, '0');
-                const originalPolicyEndDate = `${originalYear}-${originalMonth}-${originalDay}`;
-        
-                updateData.pbitis = originalPolicyEndDate; // pbitis'i 2025 tarihi ile güncelle
-        
-            } catch (e) {
-                console.error("unarchiveItem: Arşivden geri alınırken tarih hesaplanamadı, pbitis değiştirilmiyor.", e, item.pbitis);
-                showToast('warning', 'Arşiv tarihi (pbitis) geçersiz, tarih değiştirilemedi.');
-                // Hata durumunda pbitis'i (örn: 2026) olduğu gibi bırak, kullanıcı manuel düzeltsin.
-                updateData.pbitis = item.pbitis; 
-            }
-        } else {
-            // pbitis yoksa veya format bozuksa, dokunma. Sadece aktife al.
-            console.warn("unarchiveItem: Arşivdeki kaydın pbitis tarihi geçersiz, tarih değiştirilmeden aktife alınıyor.", item.docId);
-            updateData.pbitis = item.pbitis; // Olduğu gibi bırak
-        }
-        // *** DÜZELTME SONU ***
+                const parts = item.pbitis.split('-'); 
+                const reminderDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 12, 0, 0);
+    
+                if (isNaN(reminderDate.getTime())) {
+                    throw new Error('Arşivdeki pbitis tarihi geçersiz');
+                }
+                
+                // 1 Yıl çıkararak Orijinal Poliçe Bitiş Tarihine dön (örn: 2025-10-31)
+                reminderDate.setFullYear(reminderDate.getFullYear() - 1);
+    
+                const originalYear = reminderDate.getFullYear();
+                const originalMonth = String(reminderDate.getMonth() + 1).padStart(2, '0');
+                const originalDay = String(reminderDate.getDate()).padStart(2, '0');
+                const originalPolicyEndDate = `${originalYear}-${originalMonth}-${originalDay}`;
+    
+                updateData.pbitis = originalPolicyEndDate; // pbitis'i 2025 tarihi ile güncelle
+    
+            } catch (e) {
+                console.error("unarchiveItem: Arşivden geri alınırken tarih hesaplanamadı, pbitis değiştirilmiyor.", e, item.pbitis);
+                showToast('warning', 'Arşiv tarihi (pbitis) geçersiz, tarih değiştirilemedi.');
+                // Hata durumunda pbitis'i (örn: 2026) olduğu gibi bırak, kullanıcı manuel düzeltsin.
+                updateData.pbitis = item.pbitis; 
+            }
+        } else {
+            // pbitis yoksa veya format bozuksa, dokunma. Sadece aktife al.
+            console.warn("unarchiveItem: Arşivdeki kaydın pbitis tarihi geçersiz, tarih değiştirilmeden aktife alınıyor.", item.docId);
+            updateData.pbitis = item.pbitis; // Olduğu gibi bırak
+        }
+        // *** DÜZELTME SONU ***
 
-        await updateDoc(docRef, updateData);
+        await updateDoc(docRef, updateData);
 
-        showToast('success', 'Poliçe aktif listeye taşındı.');
+        showToast('success', 'Poliçe aktif listeye taşındı.');
 
-        if(DOM.activeTabBtn) DOM.activeTabBtn.click();
-        await showWarnings(false);
-        // Acente Raporu Anlık Güncelleme Simülasyonu
-        if (DOM.agencyReportModal && DOM.agencyReportModal.classList.contains('active')) {
-            await generateAgencyReport();
-        }
+        if(DOM.activeTabBtn) DOM.activeTabBtn.click();
+        await showWarnings(false);
+        // Acente Raporu Anlık Güncelleme Simülasyonu
+        if (DOM.agencyReportModal && DOM.agencyReportModal.classList.contains('active')) {
+            await generateAgencyReport();
+        }
 
-    } catch (error) {
-        console.error("Arşivden Çıkarma Hatası:", error);
-        showToast('error', 'Arşivden çıkarma sırasında hata oluştu.');
-    }
+    } catch (error) {
+        console.error("Arşivden Çıkarma Hatası:", error);
+        showToast('error', 'Arşivden çıkarma sırasında hata oluştu.');
+    }
 }
 
 // editItem (Orijinal Koddan Alındı)
@@ -1465,57 +1465,57 @@ async function renewAndArchiveAction(docId, currentExpiryDateStr) {
 
 // handleWhatsApp (Orijinal Koddan Alındı)
 function handleWhatsApp(name, plate, bitisDate, policeType, phone) {
-    const validPhone = normalizePhone(phone); // Güncellenmiş normalizePhone'u kullanır
-    if (!validPhone) {
-        showToast('warning', 'Müşterinin geçerli bir telefon numarası kayıtlı değil.');
-        return;
-    }
-    const today = new Date();
-    today.setHours(0,0,0,0);
-    let bitis;
-    let diffDays = NaN;
+    const validPhone = normalizePhone(phone); // Güncellenmiş normalizePhone'u kullanır
+    if (!validPhone) {
+        showToast('warning', 'Müşterinin geçerli bir telefon numarası kayıtlı değil.');
+        return;
+    }
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    let bitis;
+    let diffDays = NaN;
 
-    try {
-        if(bitisDate && typeof bitisDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(bitisDate)) {
-            const parts = bitisDate.split('-');
-            bitis = new Date(parts[0], parseInt(parts[1]) - 1, parseInt(parts[2]));
-            bitis.setHours(0,0,0,0);
-            if (!isNaN(bitis.getTime())) {
-                diffDays = Math.ceil((bitis - today) / (1000 * 60 * 60 * 24));
-            }
-        }
-    } catch(e) { console.warn("WhatsApp için tarih hatası:", bitisDate); }
+    try {
+        if(bitisDate && typeof bitisDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(bitisDate)) {
+            const parts = bitisDate.split('-');
+            bitis = new Date(parts[0], parseInt(parts[1]) - 1, parseInt(parts[2]));
+            bitis.setHours(0,0,0,0);
+            if (!isNaN(bitis.getTime())) {
+                diffDays = Math.ceil((bitis - today) / (1000 * 60 * 60 * 24));
+            }
+        }
+    } catch(e) { console.warn("WhatsApp için tarih hatası:", bitisDate); }
 
-    const kalan = !isNaN(diffDays) && diffDays >= 0 ? diffDays : '?';
-    const agentName = "ALTUNGA SİGORTA - MEHMET FIRAT";
-    
-    // *** YENİ EKLENEN SATIR ***
-    const agentPhone = "+905550346580"; // Sizin iletişim numaranız
-    // *** DEĞİŞİKLİK SONU ***
+    const kalan = !isNaN(diffDays) && diffDays >= 0 ? diffDays : '?';
+    const agentName = "ALTUNGA SİGORTA - MEHMET FIRAT";
+    
+    // *** YENİ EKLENEN SATIR ***
+    const agentPhone = "+905550346580"; // Sizin iletişim numaranız
+    // *** DEĞİŞİKLİK SONU ***
 
-    let dynamicSubject = "";
-    const cleanPoliceType = policeType || '';
+    let dynamicSubject = "";
+    const cleanPoliceType = policeType || '';
 
-    if (cleanPoliceType === "Trafik" || cleanPoliceType === "Kasko") {
-        dynamicSubject = `${plate ? plate + ' plakalı aracınızın ' : ''}${cleanPoliceType} sigortası`;
-    } else if (cleanPoliceType) {
-        dynamicSubject = `${cleanPoliceType} poliçeniz`;
-    } else {
-        dynamicSubject = `Sigorta poliçeniz`;
-    }
+    if (cleanPoliceType === "Trafik" || cleanPoliceType === "Kasko") {
+        dynamicSubject = `${plate ? plate + ' plakalı aracınızın ' : ''}${cleanPoliceType} sigortası`;
+    } else if (cleanPoliceType) {
+        dynamicSubject = `${cleanPoliceType} poliçeniz`;
+    } else {
+        dynamicSubject = `Sigorta poliçeniz`;
+    }
 
-    let dateText = `nın bitmesine ${kalan} gün kaldı.`;
-    if (kalan === '?') {
-        dateText = `nın bitiş tarihini kontrol ediniz.`;
-    }
+    let dateText = `nın bitmesine ${kalan} gün kaldı.`;
+    if (kalan === '?') {
+        dateText = `nın bitiş tarihini kontrol ediniz.`;
+    }
 
-    // *** GÜNCELLENEN MESAJ SATIRI ***
-    const message = `Sn. ${name || 'Müşterimiz'},\n${dynamicSubject}${dateText}\n\nPoliçenizi yenilemek ve size özel tekliflerimizi öğrenmek için bize ulaşabilirsiniz.\n\n${agentName}\n${agentPhone}`;
-    // *** DEĞİŞİKLİK SONU ***
-    
-    const url = `https://wa.me/${validPhone}?text=${encodeURIComponent(message)}`;
+    // *** GÜNCELLENEN MESAJ SATIRI ***
+    const message = `Sn. ${name || 'Müşterimiz'},\n${dynamicSubject}${dateText}\n\nPoliçenizi yenilemek ve size özel tekliflerimizi öğrenmek için bize ulaşabilirsiniz.\n\n${agentName}\n${agentPhone}`;
+    // *** DEĞİŞİKLİK SONU ***
+    
+    const url = `https://wa.me/${validPhone}?text=${encodeURIComponent(message)}`;
 
-    window.open(url, '_blank', 'noopener,noreferrer');
+    window.open(url, '_blank', 'noopener,noreferrer');
 }
 // toggleCustomerStatus (Orijinal Koddan Alındı)
 async function toggleCustomerStatus(docId, isChecked) {
@@ -2268,8 +2268,8 @@ async function uploadJsonData(file) {
                 } else if (dataToSave.odemeYontemi === 'Veresiye' && dataToSave.borcMiktari === 0) {
                      dataToSave.borcMiktari = dataToSave.tutar;
                 } else if (dataToSave.odemeYontemi !== 'Veresiye') {
-                   dataToSave.borcMiktari = 0;
-                   dataToSave.tahsilatlar = [];
+                    dataToSave.borcMiktari = 0;
+                    dataToSave.tahsilatlar = [];
                 }
 
                 if (dataToSave.status === 'cancelled') {
@@ -2318,9 +2318,6 @@ async function uploadJsonData(file) {
 
 // Yeni Fonksiyon: Admin Giriş Durumuna Göre Ayarlar Menüsünü Güncelle
 function updateAdminSettingsVisibility() {
-    // === GÜNCELLENDİ: localStorage'dan değeri oku ===
-    ADMIN_LOGGED_IN = localStorage.getItem('adminLoggedIn') === 'true';
-    
     if (DOM.adminControlsGroup) {
         DOM.adminControlsGroup.style.display = ADMIN_LOGGED_IN ? 'flex' : 'none';
     }
@@ -2341,8 +2338,8 @@ function updateAdminSettingsVisibility() {
     }
 }
 
-// Admin Giriş (GÜNCELLENDİ: Açılış kilidini açar ve verileri yükler)
-") { // <-- async eklendi
+// Admin Giriş (Orijinal Koddan Alındı)
+function handleAdminLogin() {
     const usernameInput = DOM.adminUsername.value.trim();
     const passwordInput = DOM.adminPassword.value.trim();
     if(DOM.loginError) DOM.loginError.style.display = 'none';
@@ -2354,49 +2351,12 @@ function updateAdminSettingsVisibility() {
         if (usernameInput === decodedUsername && passwordInput === decodedPassword) {
             closeModal(DOM.adminLoginModal);
             ADMIN_LOGGED_IN = true;
-            localStorage.setItem('adminLoggedIn', 'true'); // Oturum açıldı
+            localStorage.setItem('adminLoggedIn', 'true'); // KRİTİK: LOCALSTORAGE'A YAZILDI
             DOM.adminUsername.value = '';
             DOM.adminPassword.value = '';
             updateAdminSettingsVisibility();
             showToast('success', 'Yönetici girişi başarılı.');
-
-            // --- YENİ EKLENTİ: KİLİDİ AÇ VE UYGULAMAYI BAŞLAT ---
-            
-            // 1. Kilit ekranını (varsa) gizle
-            const appLocker = document.getElementById('appLocker');
-            if (appLocker) appLocker.style.display = 'none';
-            
-            // 2. 'İptal' butonunu, Ayarlar menüsünden tekrar tıklandığında
-            //    görünebilmesi için görünür yap (CSS varsayılanını ezer)
-            if (DOM.cancelAdminLogin) {
-                DOM.cancelAdminLogin.style.display = 'inline-flex';
-            }
-
-            // 3. Eğer bu İLK GİRİŞ ise (yani ana veriler henüz yüklenmediyse),
-            //    uygulamayı şimdi başlat. (Bunu tablonun boş olmasından anlayabiliriz)
-            if (DOM.dataTableBody && DOM.dataTableBody.innerHTML === '') { 
-                
-                showToast('info', 'Veriler yükleniyor...');
-                await loadData();
-                
-                // (DOMContentLoaded'den taşınan kodun aynısı)
-                if (localStorage.getItem('warningModalOpened') === null) {
-                    localStorage.setItem('warningModalOpened', 'false');
-                    isInitialLoad = true;
-                } else {
-                    isInitialLoad = false;
-                }
-                
-                await showWarnings(isInitialLoad && localStorage.getItem('warningModalOpened') === 'false');
-                
-                showToast('success', 'Veriler başarıyla yüklendi.');
-                
-                if(isInitialLoad) {
-                    localStorage.setItem('warningModalOpened', 'true');
-                }
-            }
-            // --- EKLENTİ SONU ---
-
+            toggleSettingsMenu(true);
         } else {
             if(DOM.loginError) DOM.loginError.textContent = 'Kullanıcı adı veya şifre hatalı.';
             if(DOM.loginError) DOM.loginError.style.display = 'block';
@@ -2411,7 +2371,6 @@ function updateAdminSettingsVisibility() {
     }
 }
 
-
 function handleAdminLogout() {
     ADMIN_LOGGED_IN = false;
     localStorage.removeItem('adminLoggedIn');
@@ -2419,7 +2378,7 @@ function handleAdminLogout() {
     updateAdminSettingsVisibility(); // Admin butonlarını gizle
     showToast('info', 'Yönetici oturumu kapatıldı. Sayfa yenileniyor...');
     
-    // Sayfayı yenileyerek tüm admin kontrollerinin sıfırlanmasını (ve kilit ekranının gelmesini) sağla
+    // Sayfayı yenileyerek tüm admin kontrollerinin sıfırlanmasını sağla
     setTimeout(() => {
         location.reload();
     }, 1500); // Toast mesajının görünmesi için kısa bir bekleme
@@ -2930,8 +2889,8 @@ async function generateAgencyReport() {
                  
                  // Tahsilat bu ayda ise ekle
                  if (tahsilatInMonth && !uniqueDocIds.has(data.docId)) {
-                      policies.push(data);
-                      uniqueDocIds.add(data.docId);
+                     policies.push(data);
+                     uniqueDocIds.add(data.docId);
                  }
             }
         });
@@ -3120,51 +3079,51 @@ function handlePrintAgencyReportAction(agencyName) {
 
 // 1. Veresiye Defteri Modalını Aç (GÜNCELLENDİ: State yönetimi düzeltildi)
 async function openDebtBookModal() {
-    closeModal(DOM.debtDetailModal); // Açık detay varsa kapat
-    if(DOM.debtBookListContainer) DOM.debtBookListContainer.innerHTML = '<p style="text-align:center;">Veriler yükleniyor...</p>';
-    openModal(DOM.debtBookModal);
-    
-    try {
-        const q = query(collection(db, "policies"), 
-                        where("odemeYontemi", "==", "Veresiye"),
-                        where("status", "==", "active")); // Sadece aktif poliçeler
-                        
-        const snapshot = await getDocs(q);
-        let allVeresiyePolicies = []; // TÜM aktif veresiye poliçeleri (state için)
-        let debtPoliciesForRender = []; // SADECE borcu olanlar (gösterim için)
-        let totalDebt = 0;
-        
-        snapshot.forEach(doc => {
-            const data = { ...doc.data(), docId: doc.id };
-            // Global state'i BÜTÜN aktif veresiye poliçeleriyle doldur
-            allVeresiyePolicies.push(data); 
+    closeModal(DOM.debtDetailModal); // Açık detay varsa kapat
+    if(DOM.debtBookListContainer) DOM.debtBookListContainer.innerHTML = '<p style="text-align:center;">Veriler yükleniyor...</p>';
+    openModal(DOM.debtBookModal);
+    
+    try {
+        const q = query(collection(db, "policies"), 
+                        where("odemeYontemi", "==", "Veresiye"),
+                      	where("status", "==", "active")); // Sadece aktif poliçeler
+                        
+        const snapshot = await getDocs(q);
+        let allVeresiyePolicies = []; // TÜM aktif veresiye poliçeleri (state için)
+        let debtPoliciesForRender = []; // SADECE borcu olanlar (gösterim için)
+        let totalDebt = 0;
+        
+        snapshot.forEach(doc => {
+          	const data = { ...doc.data(), docId: doc.id };
+          	// Global state'i BÜTÜN aktif veresiye poliçeleriyle doldur
+        	allVeresiyePolicies.push(data); 
 
-            const borcMiktari = data.borcMiktari || 0;
-            
-            // Listede sadece borcu olanları göster
-            if (borcMiktari > 0) {
-                debtPoliciesForRender.push(data);
-                totalDebt += borcMiktari;
-            }
-        });
-        
-        // GLOBAL STATE'İ TÜM VERİ İLE GÜNCELLE
-        // Bu, borcu 0'a düşen bir kaydın state'den kaybolmasını engeller.
-        currentDebtPolicies = allVeresiyePolicies; 
-        
-        // Sadece GÖSTERİLECEK listeyi sırala
-        debtPoliciesForRender.sort((a, b) => {
-            // En çok borçlu olan üste gelsin
-            return (b.borcMiktari || 0) - (a.borcMiktari || 0);
-        });
+          	const borcMiktari = data.borcMiktari || 0;
+            
+          	// Listede sadece borcu olanları göster
+          	if (borcMiktari > 0) {
+                debtPoliciesForRender.push(data);
+              	totalDebt += borcMiktari;
+          	}
+        });
+        
+      	// GLOBAL STATE'İ TÜM VERİ İLE GÜNCELLE
+    	// Bu, borcu 0'a düşen bir kaydın state'den kaybolmasını engeller.
+    	currentDebtPolicies = allVeresiyePolicies; 
+        
+      	// Sadece GÖSTERİLECEK listeyi sırala
+      	debtPoliciesForRender.sort((a, b) => {
+          	// En çok borçlu olan üste gelsin
+          	return (b.borcMiktari || 0) - (a.borcMiktari || 0);
+      	});
 
-        // Render fonksiyonuna SADECE BORCU OLANLARI gönder
-        renderDebtBook(debtPoliciesForRender, totalDebt);
-        
-    } catch (error) {
-        console.error("Veresiye Defteri yükleme hatası:", error);
-        if(DOM.debtBookListContainer) DOM.debtBookListContainer.innerHTML = '<p style="text-align:center; color: red;">Veriler yüklenirken bir hata oluştu.</p>';
-    }
+      	// Render fonksiyonuna SADECE BORCU OLANLARI gönder
+      	renderDebtBook(debtPoliciesForRender, totalDebt);
+        
+    } catch (error) {
+        console.error("Veresiye Defteri yükleme hatası:", error);
+        if(DOM.debtBookListContainer) DOM.debtBookListContainer.innerHTML = '<p style="text-align:center; color: red;">Veriler yüklenirken bir hata oluştu.</p>';
+    }
 }
 
 // 2. Veresiye Defteri Listesini Render Et
@@ -3327,68 +3286,68 @@ function renderDebtHistory(tahsilatlar) {
 
 // 5. Tahsilat Ekle (NİHAİ DÜZELTME: State kontrolü kaldırıldı)
 async function addPayment() {
-    if (!currentDebtDetailDocId) return;
-    
-    const amountStr = DOM.debtPaymentAmount.value;
-    const date = DOM.debtPaymentDate.value;
-    const amount = parseCurrency(amountStr);
-    
-    if (amount <= 0 || !date) {
-        showToast('error', 'Lütfen geçerli bir tutar ve tarih girin.');
-        return;
-    }
+    if (!currentDebtDetailDocId) return;
+    
+    const amountStr = DOM.debtPaymentAmount.value;
+    const date = DOM.debtPaymentDate.value;
+    const amount = parseCurrency(amountStr);
+    
+    if (amount <= 0 || !date) {
+      	showToast('error', 'Lütfen geçerli bir tutar ve tarih girin.');
+      	return;
+    }
 
-    let item = null;
-    let itemSource = 'getDoc'; // Kaynağı 'getDoc' olarak sabitliyoruz
+  	let item = null;
+  	let itemSource = 'getDoc'; // Kaynağı 'getDoc' olarak sabitliyoruz
 
-    // 1. STATE KONTROLÜ KALDIRILDI.
-    console.log("addPayment: State kontrolü atlanıyor, sunucudan veri çekiliyor...");
-    try {
-        // Sunucudan en güncel veriyi zorla çek
-        const docSnap = await getDoc(doc(db, "policies", currentDebtDetailDocId), { source: 'server' });
-        if (docSnap.exists()) {
-            item = docSnap.data();
-        }
-    } catch (e) {
-        console.error("addPayment -> getDoc hatası:", e);
-        showToast('error', 'İşlem yapılacak kayıt okunurken bir hata oluştu.');
-        return;
-      }
-    
-    if (!item) {
-        showToast('error', 'İşlem yapılacak kayıt bulunamadı.');
-        return;
-    }
-    
-    try {
-        const docRef = doc(db, "policies", currentDebtDetailDocId);
-        
-        const currentBorc = item.borcMiktari || 0; 
-        const currentTahsilatlar = item.tahsilatlar || [];
-        
-        if (amount > currentBorc && currentBorc > 0) {
-            showToast('warning', `Girilen tutar (${formatCurrency(amount)} ₺) kalan borçtan (${formatCurrency(currentBorc)} ₺) fazladır. Borç ${formatCurrency(currentBorc)} ₺ olarak güncellenecektir.`, 'warning');
-        }
-        
-        const newBorc = Math.max(0, currentBorc - amount); 
-        
-        const newTahsilat = {
-            tarih: date,
-            tutar: amount
-        };
-        
-        currentTahsilatlar.push(newTahsilat);
-        
-        await updateDoc(docRef, {
-            borcMiktari: newBorc,
-            tahsilatlar: currentTahsilatlar
-        });
-        
-        // State güncelleme satırları kaldırıldı (çünkü state artık kullanılmıyor)
-        
-        showToast('success', `${formatCurrency(amount)} ₺ tahsilat kaydedildi. Kalan borç: ${formatCurrency(newBorc)} ₺`);
-        
-        // Arayüzü güncelle
+  	// 1. STATE KONTROLÜ KALDIRILDI.
+  	console.log("addPayment: State kontrolü atlanıyor, sunucudan veri çekiliyor...");
+  	try {
+      	// Sunucudan en güncel veriyi zorla çek
+      	const docSnap = await getDoc(doc(db, "policies", currentDebtDetailDocId), { source: 'server' });
+      	if (docSnap.exists()) {
+        	item = docSnap.data();
+      	}
+  	} catch (e) {
+        	console.error("addPayment -> getDoc hatası:", e);
+        	showToast('error', 'İşlem yapılacak kayıt okunurken bir hata oluştu.');
+        	return;
+      }
+  	
+  	if (!item) {
+      	showToast('error', 'İşlem yapılacak kayıt bulunamadı.');
+      	return;
+  	}
+  	
+  	try {
+      	const docRef = doc(db, "policies", currentDebtDetailDocId);
+      	
+      	const currentBorc = item.borcMiktari || 0; 
+      	const currentTahsilatlar = item.tahsilatlar || [];
+      	
+      	if (amount > currentBorc && currentBorc > 0) {
+        	showToast('warning', `Girilen tutar (${formatCurrency(amount)} ₺) kalan borçtan (${formatCurrency(currentBorc)} ₺) fazladır. Borç ${formatCurrency(currentBorc)} ₺ olarak güncellenecektir.`, 'warning');
+      	}
+      	
+      	const newBorc = Math.max(0, currentBorc - amount); 
+      	
+      	const newTahsilat = {
+        	tarih: date,
+        	tutar: amount
+      	};
+      	
+      	currentTahsilatlar.push(newTahsilat);
+      	
+      	await updateDoc(docRef, {
+        	borcMiktari: newBorc,
+        	tahsilatlar: currentTahsilatlar
+      	});
+      	
+      	// State güncelleme satırları kaldırıldı (çünkü state artık kullanılmıyor)
+      	
+      	showToast('success', `${formatCurrency(amount)} ₺ tahsilat kaydedildi. Kalan borç: ${formatCurrency(newBorc)} ₺`);
+      	
+      	// Arayüzü güncelle
         if (DOM.debtRemainingAmount) {
             if (newBorc > 0) {
                 DOM.debtRemainingAmount.textContent = formatCurrency(newBorc) + ' ₺';
@@ -3398,85 +3357,85 @@ async function addPayment() {
                 DOM.debtRemainingAmount.style.color = 'var(--green-color)';
             }
         }
-        
-        // Tahsilat geçmişini yeniden render et
-        renderDebtHistory(currentTahsilatlar); 
-        
-        // Giriş alanlarını sıfırla
-        if(DOM.debtPaymentAmount) DOM.debtPaymentAmount.value = '0,00';
-        
-        // Ana listeleri ve raporu yenile
-        await loadData(); 
-        if (DOM.agencyReportModal && DOM.agencyReportModal.classList.contains('active')) {
-            await generateAgencyReport();
-        }
+      	
+      	// Tahsilat geçmişini yeniden render et
+      	renderDebtHistory(currentTahsilatlar); 
+      	
+      	// Giriş alanlarını sıfırla
+      	if(DOM.debtPaymentAmount) DOM.debtPaymentAmount.value = '0,00';
+      	
+      	// Ana listeleri ve raporu yenile
+      	await loadData(); 
+      	if (DOM.agencyReportModal && DOM.agencyReportModal.classList.contains('active')) {
+        	await generateAgencyReport();
+      	}
 
-    } catch (error) {
-        console.error("Tahsilat ekleme hatası:", error);
-        showToast('error', 'Tahsilat eklenirken bir hata oluştu.');
-    }
+  	} catch (error) {
+      	console.error("Tahsilat ekleme hatası:", error);
+      	showToast('error', 'Tahsilat eklenirken bir hata oluştu.');
+  	}
 }
 
 // 6. Tahsilat Sil (NİHAİ DÜZELTME: State kontrolü kaldırıldı)
 async function deletePayment(docId, tarih, tutar) {
-    if (!docId) return;
-    if (!await showConfirm("Bu tahsilat kaydını silmek istediğinize emin misiniz? Kalan borç miktarı artırılacaktır.")) return;
+    if (!docId) return;
+    if (!await showConfirm("Bu tahsilat kaydını silmek istediğinize emin misiniz? Kalan borç miktarı artırılacaktır.")) return;
 
-    let item = null;
-    let itemSource = 'getDoc'; // Kaynağı 'getDoc' olarak sabitliyoruz
+  	let item = null;
+  	let itemSource = 'getDoc'; // Kaynağı 'getDoc' olarak sabitliyoruz
 
-    // 1. STATE KONTROLÜ KALDIRILDI.
-    console.log("deletePayment: State kontrolü atlanıyor, sunucudan veri çekiliyor...");
-    try {
-        // Sunucudan en güncel veriyi zorla çek
-        const docSnap = await getDoc(doc(db, "policies", docId), { source: 'server' });
-        if (docSnap.exists()) {
-            item = docSnap.data();
-        }
-    } catch (e) {
-        console.error("deletePayment -> getDoc hatası:", e);
-        showToast('error', 'İşlem yapılacak kayıt okunurken bir hata oluştu.');
-        return;
-      }
-    
-    if (!item) {
-        showToast('error', 'İşlem yapılacak kayıt bulunamadı.');
-        return;
-    }
+  	// 1. STATE KONTROLÜ KALDIRILDI.
+  	console.log("deletePayment: State kontrolü atlanıyor, sunucudan veri çekiliyor...");
+  	try {
+      	// Sunucudan en güncel veriyi zorla çek
+      	const docSnap = await getDoc(doc(db, "policies", docId), { source: 'server' });
+      	if (docSnap.exists()) {
+        	item = docSnap.data();
+      	}
+  	} catch (e) {
+        	console.error("deletePayment -> getDoc hatası:", e);
+        	showToast('error', 'İşlem yapılacak kayıt okunurken bir hata oluştu.');
+        	return;
+      }
+  	
+  	if (!item) {
+      	showToast('error', 'İşlem yapılacak kayıt bulunamadı.');
+      	return;
+  	}
 
-    try {
-        const docRef = doc(db, "policies", docId);
-        
-        let currentBorc = item.borcMiktari || 0;
-        let currentTahsilatlar = item.tahsilatlar || [];
-        
-        let removed = false;
-        currentTahsilatlar = currentTahsilatlar.filter(t => {
-            if (t.tarih === tarih && t.tutar === tutar && !removed) {
-                removed = true;
-                return false;
-            }
-            return true;
-        });
+  	try {
+      	const docRef = doc(db, "policies", docId);
+      	
+      	let currentBorc = item.borcMiktari || 0;
+      	let currentTahsilatlar = item.tahsilatlar || [];
+      	
+      	let removed = false;
+      	currentTahsilatlar = currentTahsilatlar.filter(t => {
+        	if (t.tarih === tarih && t.tutar === tutar && !removed) {
+        		removed = true;
+        		return false;
+        	}
+        	return true;
+      	});
 
-        if (!removed) {
-            showToast('error', 'Silinecek tahsilat kaydı bulunamadı.');
-            return;
-        }
-        
-        // Borcu silinen tutar kadar geri ekle, ama poliçe tutarını geçmesin
-        const newBorc = Math.min(item.tutar || (currentBorc + tutar), currentBorc + tutar);
-        
-        await updateDoc(docRef, {
-            borcMiktari: newBorc,
-            tahsilatlar: currentTahsilatlar
-        });
-        
-        // State güncelleme satırları kaldırıldı
-        
-        showToast('success', `${formatCurrency(tutar)} ₺ tahsilat silindi. Yeni borç: ${formatCurrency(newBorc)} ₺`);
-        
-        // Arayüzü güncelle
+      	if (!removed) {
+        	showToast('error', 'Silinecek tahsilat kaydı bulunamadı.');
+        	return;
+      	}
+      	
+      	// Borcu silinen tutar kadar geri ekle, ama poliçe tutarını geçmesin
+      	const newBorc = Math.min(item.tutar || (currentBorc + tutar), currentBorc + tutar);
+      	
+      	await updateDoc(docRef, {
+        	borcMiktari: newBorc,
+        	tahsilatlar: currentTahsilatlar
+      	});
+      	
+      	// State güncelleme satırları kaldırıldı
+      	
+      	showToast('success', `${formatCurrency(tutar)} ₺ tahsilat silindi. Yeni borç: ${formatCurrency(newBorc)} ₺`);
+      	
+      	// Arayüzü güncelle
         if (DOM.debtRemainingAmount) {
             if (newBorc > 0) {
                 DOM.debtRemainingAmount.textContent = formatCurrency(newBorc) + ' ₺';
@@ -3486,86 +3445,30 @@ async function deletePayment(docId, tarih, tutar) {
                 DOM.debtRemainingAmount.style.color = 'var(--green-color)';
             }
         }
-        
-        // Tahsilat geçmişini yeniden render et
-        renderDebtHistory(currentTahsilatlar); 
-        
-        // Ana listeleri ve raporu yenile
-        await loadData(); 
-        if (DOM.agencyReportModal && DOM.agencyReportModal.classList.contains('active')) {
-            await generateAgencyReport();
-        }
-        
-    } catch (error) {
-        console.error("Tahsilat silme hatası:", error);
-        showToast('error', 'Tahsilat silinirken bir hata oluştu.');
-    }
+      	
+      	// Tahsilat geçmişini yeniden render et
+      	renderDebtHistory(currentTahsilatlar); 
+      	
+      	// Ana listeleri ve raporu yenile
+      	await loadData(); 
+      	if (DOM.agencyReportModal && DOM.agencyReportModal.classList.contains('active')) {
+        	await generateAgencyReport();
+      	}
+      	
+  	} catch (error) {
+      	console.error("Tahsilat silme hatası:", error);
+      	showToast('error', 'Tahsilat silinirken bir hata oluştu.');
+  	}
 }
 
 
-// --- Olay Dinleyicileri (GÜNCELLENDİ: Açılış Kilidi Mantığı Eklendi) ---
+// --- Olay Dinleyicileri ---
 
 document.addEventListener('DOMContentLoaded', async () => {
     // DOM elementlerinin varlığını kontrol ederek hata verme riskini azaltıyoruz.
     populateActiveFilterDropdowns(); // KRİTİK: Yeni aktif filtreleme fonksiyonu
     if (DOM.reportMonth && DOM.reportYear) populateReportDropdowns(DOM.reportMonth, DOM.reportYear);
     if (DOM.agencyReportMonth && DOM.agencyReportYear) populateReportDropdowns(DOM.agencyReportMonth, DOM.agencyReportYear);
-
-    // === YENİ AÇILIŞ KONTROLÜ ===
-    const appLocker = document.getElementById('appLocker');
-    
-    // 1. localStorage'dan admin durumunu KONTROL ET
-    // (ADMIN_LOGGED_IN değişkeni dosyanın en üstünde global olarak tanımlanmıştı)
-    updateAdminSettingsVisibility(); // Ayarlar menüsündeki admin butonlarını (gizli/açık) ayarla
-
-    if (!ADMIN_LOGGED_IN) {
-        // 2. GİRİŞ YAPILMAMIŞSA (İlk açılış)
-        
-        // Kilit ekranını göster
-        if (appLocker) appLocker.style.display = 'block';
-        
-        // "İptal" butonu CSS ile zaten gizli (#adminLoginModal #cancelAdminLogin).
-        
-        // Giriş modalını zorunlu olarak aç
-        openModal(DOM.adminLoginModal);
-        if (DOM.adminUsername) DOM.adminUsername.focus();
-        
-        // *** KRİTİK: ***
-        // Admin girişi yapılmadığı için loadData() ve showWarnings() ÇALIŞTIRILMAZ.
-        // Bu fonksiyonlar handleAdminLogin() içinde tetiklenecek.
-        
-    } else {
-        // 3. GİRİŞ YAPILMIŞSA (Sayfa yenileme vb.)
-        
-        // Kilit ekranını gizle
-        if (appLocker) appLocker.style.display = 'none';
-        
-        // --- UYGULAMANIN NORMAL YÜKLEMESİ ---
-        // (Bu kod bloğu zaten mevcuttu, sadece bu 'else' bloğuna taşıdık)
-        
-        showToast('info', 'Veriler yükleniyor...');
-        await loadData();
-        
-        if (localStorage.getItem('warningModalOpened') === null) {
-            localStorage.setItem('warningModalOpened', 'false');
-            isInitialLoad = true;
-        } else {
-            isInitialLoad = false;
-        }
-        
-        await showWarnings(isInitialLoad && localStorage.getItem('warningModalOpened') === 'false');
-        
-        showToast('success', 'Veriler başarıyla yüklendi.');
-        
-        if(isInitialLoad) {
-            localStorage.setItem('warningModalOpened', 'true');
-        }
-        // --- NORMAL YÜKLEME SONU ---
-    }
-    // === AÇILIŞ KONTROLÜ SONU ===
-
-
-    // *** Kalan Tüm Olay Dinleyicileri (if/else dışında kalmalı) ***
 
     // *** YENİ ÇÖZÜM: ACENTE RAPORU FİLTRE DEĞİŞİKLİĞİNDE GÜNCELLEME ***
     if (DOM.agencyReportMonth && DOM.agencyReportYear) {
@@ -3786,7 +3689,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
     if (DOM.generateReportBtn) DOM.generateReportBtn.addEventListener('click', generateMonthlyReport);
 
-    // GÜNCELLENEN settingsBtn Dinleyicisi
     if (DOM.settingsBtn) DOM.settingsBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         if (DOM.settingsMenu && DOM.settingsMenu.style.display === 'flex') {
@@ -3798,20 +3700,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 DOM.adminUsername.value = '';
                 DOM.adminPassword.value = '';
                 if(DOM.loginError) DOM.loginError.style.display = 'none';
-
-                // --- YENİ EKLENTİ ---
-                // Ayarlar menüsünden tıklandığı için 'İptal' butonunu GÖSTER
-                if (DOM.cancelAdminLogin) {
-                    DOM.cancelAdminLogin.style.display = 'inline-flex';
-                }
-                // --- EKLENTİ SONU ---
-
                 openModal(DOM.adminLoginModal);
                 if(DOM.adminUsername) DOM.adminUsername.focus();
             }
         }
     });
-
     if (DOM.loginAdminBtn) DOM.loginAdminBtn.addEventListener('click', handleAdminLogin);
     if (DOM.adminPassword) DOM.adminPassword.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') handleAdminLogin();
@@ -3931,3 +3824,4 @@ window.deletePayment = deletePayment;
 window.handleRefundAmountFocus = handleRefundAmountFocus;
 window.handleRefundAmountBlur = handleRefundAmountBlur;
 window.handleRefundAmountInput = handleRefundAmountInput;
+v
