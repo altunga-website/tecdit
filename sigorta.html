@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+     
+    <title>POLİÇE TAKİP SİSTEMİ</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="confirmModal" class="modal">
+    <div class="modal-content">
+        <h3>Onay Gerekli</h3>
+        <p id="confirmMessage"></p>
+        <div class="modal-buttons">
+            <button id="confirmYesBtn" class="danger">Evet</button>
+            <button id="confirmNoBtn" class="secondary">Hayır</button>
+        </div>
+    </div>
+</div>
+
+<div id="adminLoginModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-user-shield"></i> Yönetici Girişi</h3>
+            <p>Yedekleme işlemlerini yapabilmek için lütfen kimlik doğrulamanızı yapın.</p>
+        </div>
+
+        <div class="form-group">
+            <label for="adminUsername">Kullanıcı Adı</label>
+            <input type="text" id="adminUsername" placeholder="Kullanıcı Adınız" />
+        </div>
+        <div class="form-group">
+            <label for="adminPassword">Şifre</label>
+            <input type="password" id="adminPassword" placeholder="Şifreniz" />
+        </div>
+        <p id="loginError" style="color: var(--red-color); margin-top: 10px; display: none;">Kullanıcı adı veya şifre hatalı.</p>
+
+        <div class="modal-actions">
+            <button id="cancelAdminLogin" class="secondary"><i class="fas fa-times"></i> İptal</button>
+            <button id="loginAdminBtn"><i class="fas fa-sign-in-alt"></i> Giriş Yap</button>
+        </div>
+    </div>
+</div>
+
+<div id="cancelModal" class="modal">
+    <div class="modal-content" style="max-width: 450px;">
+        <div class="modal-header">
+            <h3><i class="fas fa-ban"></i> Poliçe İptali</h3>
+            <p>Lütfen iptal sebebini, geçerlilik tarihini ve müşteriye iade edilen tutarı girin.</p>
+        </div>
+        <div class="form-group">
+            <label for="cancelDate">İptal Tarihi</label>
+            <input type="date" id="cancelDate" required />
+        </div>
+        <div class="form-group">
+            <label for="refundAmount">İade Edilen Prim Tutarı</label>
+            <div class="input-wrapper">
+                <input type="text" id="refundAmount" placeholder="0,00" inputmode="decimal" required />
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="cancelReason">İptal Nedeni</label>
+            <textarea id="cancelReason" placeholder="İptal nedenini buraya yazın..." rows="3"></textarea>
+        </div>
+        <div class="modal-actions">
+            <button id="cancelCancelBtn" class="secondary"><i class="fas fa-times"></i> İptal</button>
+            <button id="saveCancelBtn" class="danger"><i class="fas fa-ban"></i> İptali Kaydet</button>
+        </div>
+    </div>
+</div>
+<div id="toast-container"></div>
+
+<audio id="zilSesi" src="beep_short.mp3" preload="auto"></audio>
+    <div class="container">
+        <div class="logo-container">
+        <img src="logo.svg" alt="Poliçe Takip Sistemi Logosu" class="logo">
+    </div>
+
+    <div id="loginScreen" style="display: flex;">
+        </div>
+    <div id="notificationBell">
+    <i class="fas fa-bell"></i>
+    <span id="warningCount" class="badge">0</span>
+</div>
+
+    <div>
+        <div class="sub-header" style="font-size: 1.2rem; font-weight: 500; margin-bottom: 5px; text-align: center; color: var(--primary-color);">Sivas Güven Sigorta</div>
+        <h1>POLİÇE TAKİP SİSTEMİ</h1>
+        </div>
+
+        <div class="toolbar">
+            <div class="toolbar-group">
+                <button id="addBtn"><i class="fas fa-plus"></i> Yeni Poliçe Ekle</button>
+                
+                <button id="bulkDeleteBtn" disabled style="display:none;"><i class="fas fa-trash-alt"></i> Seçilenleri Sil (0)</button>
+
+                <button id="monthlyReportBtn"><i class="fas fa-calendar-alt"></i> Aylık Rapor</button>
+               
+                <button id="agencyReportBtn"><i class="fas fa-handshake"></i> Acente Raporu</button>
+                
+                <button id="debtBookBtn"><i class="fas fa-book"></i> Veresiye Defteri</button>
+            </div>
+            <input type="text" id="searchInput" class="search-box" placeholder="Aktif sekmede isim, plaka veya poliçe no ara..." oninput="this.value = this.value.toLocaleUpperCase('tr-TR'); filterData(this.value.trim());">
+        </div>
+
+        <div class="tab-menu">
+            <button id="activeTabBtn" class="active">Aktif Poliçeler</button>
+            <button id="archiveTabBtn">Arşiv</button>
+            <button id="cancelledTabBtn">İptal</button>
+        </div>
+
+        <div id="activeList" class="card">
+            <div class="active-policy-header">
+                <h2>Aktif Poliçeler</h2>
+                <div class="active-policy-filter">
+                    <label>Filtrele:</label>
+                    <div class="active-policy-filter-group">
+                        <select id="activeFilterMonth">
+                            <option value="all">Tüm Aktif Poliçeler (Dolmayanlar)</option>
+                        </select>
+                    </div>
+                    <div class="active-policy-filter-group">
+                        <select id="activeFilterYear"></select>
+                    </div>
+                </div>
+            </div>
+            <div class="table-wrapper">
+                <table class="data-table" id="dataTable">
+                    <thead>
+                        <tr>
+                            <th class="bulk-select-cell" style="width: 30px;">
+                                <input type="checkbox" id="bulkSelectAllHeader" onclick="handleBulkSelectAll(this.checked)" title="Tümünü Seç/Seçimi Kaldır">
+                            </th>
+                            <th data-sort="pbitis">Bitiş Tarihi</th>
+                            <th data-sort="policeType">Poliçe Türü</th>
+                            <th data-sort="sirket">Şirket</th>
+                            <th data-sort="policeNo">Poliçe No</th>
+                            <th data-sort="tcKimlikNo">TC No</th>
+                            <th data-sort="isim">İsim Soyad</th>
+                            <th data-sort="plaka">Plaka</th>
+                            <th data-sort="ruhsatSeriNo">Ruhsat Seri No</th>
+                            <th data-sort="telefon">Telefon</th>
+                            <th data-sort="tutar">Tutar</th>
+                            <th>İşlemler</th>
+                            <th class="customer-status-cell">Arandı</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dataTableBody">
+                        </tbody>
+                </table>
+            </div>
+            <p class="footnote" id="activeCountFooter">Toplam Kayıt: 0 / 0 (Filtreye uygun / Toplam Aktif)</p>
+            <p class="footnote">Bitiş tarihi yaklaşanlar (<span class="red-text">15 gün</span>) kırmızı, 15 günden fazla olanlar yeşil renkte gösterilir. Aranan müşteriler mor renkte gösterilir. Detaylar ve Notlar için satıra tıklayınız.</p>
+        </div>
+
+<div id="archiveList" class="card" style="display:none;">
+    <h2>Arşivlenmiş Poliçeler</h2>
+    <div id="archiveAccordion" class="archive-accordion">
+        </div>
+
+    <p class="footnote" id="archiveCountFooter" style="margin-top: 16px;">Toplam Kayıt: 0 / 0 (Filtreye uygun / Toplam Arşiv)</p>
+    </div>
+
+<div id="cancelledList" class="card" style="display:none;">
+    <h2>İptal Edilmiş Poliçeler</h2>
+    <div id="cancelledAccordion" class="archive-accordion">
+        </div>
+
+    <p class="footnote" id="cancelledCountFooter" style="margin-top: 16px;">Toplam Kayıt: 0 / 0 (Filtreye uygun / Toplam İptal Edilmiş)</p>
+</div>
+    </div>
+
+    <div id="addModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-file-contract"></i> Yeni Poliçe Kaydı</h3>
+                <p>Lütfen poliçe bilgilerini eksiksiz girin.</p>
+            </div>
+
+<div class="form-grid">
+    <div class="form-group">
+        <label for="tcKimlikNo">TC Kimlik Numarası</label>
+        <input type="text" id="tcKimlikNo" placeholder="11 haneli T.C. Kimlik No" maxlength="11" />
+    </div>
+    <div class="form-group">
+        <label for="isim">İsim Soyad</label>
+        <input type="text" id="isim" placeholder="Müşterinin adı ve soyadı" oninput="this.value = this.value.toLocaleUpperCase('tr-TR')" />
+    </div>
+    <div class="form-group">
+        <label for="dogumTarihi">Doğum Tarihi</label>
+        <input type="date" id="dogumTarihi" />
+    </div>
+    <div class="form-group">
+         <label for="telefon">Telefon Numarası</label>
+        <input type="tel" id="telefon" placeholder="5XX XXX XX XX" />
+        
+       
+    </div>
+    <div class="form-group">
+        <label for="plaka">Plaka</label>
+        <input type="text" id="plaka" placeholder="34 ABC 123" oninput="this.value = this.value.toLocaleUpperCase('tr-TR')" />
+           </div>
+           <div class="form-group">
+        <label for="ruhsatSeriNo">Ruhsat Seri No</label>
+        <input type="text" id="ruhsatSeriNo" placeholder="AA-123456" />
+    </div>
+    <div class="form-group">
+        <label for="policeType">Poliçe Türü</label>
+        <select id="policeType">
+            <option value="">Seçiniz</option>
+            <option value="Trafik">Trafik Sigortası</option>
+            <option value="Kasko">Kasko Sigortası</option>
+            <option value="Konut">Konut Sigortası</option>
+            <option value="Dask">Doğal Afet Sigortası</option>
+            <option value="TSS">TSS (Tamamlayıcı Sağlık)</option>
+            <option value="IsYeri">İş Yeri Sigortası</option>
+            <option value="HekimSorumluluk">Hekim Sorumluluk Sigortası</option>
+            <option value="FerdiKaza">Ferdi Kaza Sigortası</option>
+            <option value="IMM">IMM (İhtiyari Mali Mesuliyet)</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label for="sirket">Sigorta Şirketi</label>
+        <input type="text" id="sirket" placeholder="Örn: Anadolu Sigorta" oninput="this.value = this.value.toLocaleUpperCase('tr-TR')" />
+    </div>
+    <div class="form-group">
+        <label for="policeNo">Poliçe Numarası</label>
+        <input type="text" id="policeNo" placeholder="Poliçe numarası" oninput="this.value = this.value.toLocaleUpperCase('tr-TR')" />
+    </div>
+    <div class="form-group">
+        <label for="pbitis">Poliçe Bitiş Tarihi</label>
+        <input type="date" id="pbitis" />
+    </div>
+    <div class="form-group">
+        <label for="tutar">Poliçe Tutarı</label>
+        <div class="input-wrapper">
+            <input type="text" id="tutar" placeholder="0,00" inputmode="decimal" />
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="odemeYontemi">Ödeme Yöntemi</label>
+        <select id="odemeYontemi">
+            <option value="">Seçiniz</option>
+            <option value="K.Kartı">K.Kartı</option>
+            <option value="Bizim Kart">Bizim Kart</option>
+            <option value="Nakit">Nakit</option>
+            <option value="Veresiye">Veresiye</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label for="yonlendirenAcente">Yönlendiren Acente</label>
+        <select id="yonlendirenAcente">
+            <option value="">Seçiniz</option>
+            <option value="WEB">WEB</option>
+            <option value="BİG">BİG</option>
+            <option value="5N1K">5N1K</option>
+            <option value="Ş.KOTAN">Ş.KOTAN</option>
+            <option value="MERKEZ">MERKEZ</option>
+        </select>
+    </div>
+    
+    
+    <div class="form-group">
+        <label for="referans">Referans</label>
+        <input type="text" id="referans" placeholder="Örn: Ahmet Yılmaz" oninput="this.value = this.value.toLocaleUpperCase('tr-TR')" />
+    </div>
+    
+    <div class="form-group" id="manualCommissionRateGroup" style="display:none;">
+        <label for="manualCommissionRate">Manuel Komisyon Oranı (%)</label>
+        <input type="number" id="manualCommissionRate" placeholder="Örn: 16" min="0" max="100" step="0.01" />
+    </div>
+</div>
+<div class="modal-actions">
+                <button id="cancelBtn" class="secondary"><i class="fas fa-times"></i> İptal</button>
+                <button id="saveBtn"><i class="fas fa-save"></i> Kaydet</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="detailModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header detail-header-with-action">
+                <h3><i class="fas fa-file-invoice"></i> Poliçe Detayları ve Notlar</h3>
+                 <button id="cancelPolicyBtn" class="danger top-right-action-btn"><i class="fas fa-ban"></i> İptal Et</button>
+                <p>Müşterinin bilgilerini, tutarını, referansını, acentesini ve özel notlarını görüntüle/düzenle.</p>
+            </div>
+
+            <div id="cancellationInfo" class="cancellation-info" style="display:none; margin-bottom: 20px;">
+                <p><strong><i class="fas fa-exclamation-circle"></i> Durumu:</strong> <span id="cancellationStatus"></span></p>
+                <p><strong>İptal Tarihi:</strong> <span id="cancellationDate"></span></p>
+                <p><strong>İade Tutarı:</strong> <span id="cancellationRefund"></span></p>
+                <p><strong>İptal Nedeni:</strong> <span id="cancellationReason"></span></p>
+                <button id="undoCancelBtn" class="primary"><i class="fas fa-undo"></i> İptali Geri Al</button>
+            </div>
+
+
+            <div id="detailContent" class="detail-grid">
+                </div>
+
+            <div id="notesAndOffersWrapper"> <div class="offer-section">
+                    <div class="offer-header">
+                        <h4><i class="fas fa-tags"></i> Teklifler</h4>
+                        <button id="addOfferBtn" class="add-offer-btn"><i class="fas fa-plus"></i> Teklif Ekle</button>
+                    </div>
+                    <div id="offersContainer">
+                        </div>
+                </div>
+                <div class="form-group full-width" style="margin-top: 20px;">
+                    <label for="notesArea">Notlar</label>
+                    <textarea id="notesArea" placeholder="Özel notlarınızı buraya ekleyebilirsiniz..." rows="3"></textarea>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button id="closeDetailBtn" class="secondary"><i class="fas fa-times"></i> Kapat</button>
+                <button id="saveNotesBtn" style="min-width: 50px;"><i class="fas fa-save"></i> Kaydet</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="alertModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-exclamation-triangle"></i> Yaklaşan Poliçe Uyarıları</h3>
+                <p>Aşağıdaki poliçelerin bitiş tarihi yaklaşıyor (15 gün veya daha az) veya yenilemesi gelmiş.</p>
+            </div>
+            <div id="alertContent" class="alert-grid">
+                </div>
+            <div class="modal-actions">
+                <button id="closeAlertBtn" class="secondary"><i class="fas fa-check"></i> Tamam</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="monthlyReportModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-calendar-alt"></i> Aylık Poliçe Raporu</h3>
+                <p>Bitiş tarihine göre belirli bir aydaki tüm poliçeleri (aktif, arşivlenmiş ve iptal edilmiş) görüntüleyin.</p>
+            </div>
+            <div class="report-controls">
+                <label for="reportMonth">Ay Seçin:</label>
+                <select id="reportMonth"></select>
+                <label for="reportYear">Yıl Seçin:</label>
+                <select id="reportYear"></select>
+                <button id="generateReportBtn">Raporu Göster</button>
+            </div>
+            <div class="modal-body" id="monthlyReportContent">
+                <p style="text-align:center;">Lütfen rapor oluşturmak için bir ay ve yıl seçin.</p>
+            </div>
+            <div class="modal-actions">
+                <button id="closeReportBtn" class="secondary"><i class="fas fa-times"></i> Kapat</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="agencyReportModal" class="modal">
+        <div class="modal-content">
+            
+           <div class="modal-header agency-report-header">
+                
+                <div class="modal-header-text">
+                    <h3><i class="fas fa-handshake"></i> Yönlendirilen Acente Raporu</h3>
+                    <p>Yönlendiren acenteler üzerinden kesilen poliçeler ve komisyon hesaplamaları.</p>
+                </div>
+                
+                <div class="report-controls compact">
+                    <div class="form-group compact-select">
+                        <label for="agencyReportMonth">Ay:</label>
+                        <select id="agencyReportMonth"></select>
+                    </div>
+                    <div class="form-group compact-select">
+                        <label for="agencyReportYear">Yıl:</label>
+                        <select id="agencyReportYear"></select>
+                    </div>
+                    <button id="printAgencyReportBtn" class="secondary" title="Raporu Yazdır"><i class="fas fa-print"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="modal-body" id="agencyReportContent">
+                <p style="text-align:center;">Lütfen raporu görüntülemek için bir ay ve yıl seçin.</p>
+            </div>
+
+            <div class="modal-actions">
+                <button id="closeAgencyReportBtn" class="secondary"><i class="fas fa-times"></i> Kapat</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="printSelectionModal" class="modal">
+        <div class="modal-content" style="max-width: 450px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-print"></i> Rapor Yazdırma Seçimi</h3>
+                <p>Hangi acentenin komisyon tablosunu yazdırmak istiyorsunuz?</p>
+            </div>
+            
+            <div class="form-group">
+                <label for="printAgencySelect">Acente Seçimi</label>
+                <select id="printAgencySelect">
+                    <option value="ALL">TÜM ACENTELER (GENEL RAPOR)</option>
+                </select>
+            </div>
+
+            <div class="modal-actions">
+                <button id="cancelPrintBtn" class="secondary"><i class="fas fa-times"></i> İptal</button>
+                <button id="confirmPrintBtn"><i class="fas fa-print"></i> Yazdır</button>
+            </div>
+        </div>
+    </div>
+    <button id="settingsBtn"><i class="fas fa-cog"></i></button>
+
+    <div id="settingsMenu" style="display: none;">
+        <button id="downloadJsonBtn"><i class="fas fa-file-download"></i> Tüm Veriyi İndir (JSON)</button>
+        <button id="uploadJsonBtn"><i class="fas fa-file-upload"></i> Yedek Yükle (JSON)</button>
+        <input type="file" id="jsonFileInput" accept=".json" style="display: none;">
+
+        <div id="adminControlsGroup" style="display: none; flex-direction: column; padding-top: 10px; border-top: 1px solid #ccc; margin-top: 10px; gap: 8px;">
+           <button id="logoutBtn" class="secondary"><i class="fas fa-sign-out-alt"></i> Yönetici Çıkışı</button>
+           
+           <button id="deleteArchiveBtn" class="danger"><i class="fas fa-archive"></i> Arşivi Temizle</button>
+           <button id="deleteCancelledBtn" class="danger"><i class="fas fa-ban"></i> İptalleri Temizle</button>
+        </div>
+    </div>
+
+    <div id="debtBookModal" class="modal">
+        <div class="modal-content" style="max-width: 900px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-book"></i> Veresiye Defteri (Aktif Borçlular)</h3>
+                <p>Ödeme yöntemi "Veresiye" olarak seçilen ve borcu 0'dan büyük olan aktif poliçeler.</p>
+            </div>
+            <div class="modal-body" id="debtBookListContainer" style="max-height: 70vh;">
+                <p style="text-align:center;">Yükleniyor...</p>
+            </div>
+            <div class="modal-actions">
+                <button class="secondary" onclick="closeModal(document.getElementById('debtBookModal'))"><i class="fas fa-times"></i> Kapat</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="debtDetailModal" class="modal">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-hand-holding-usd"></i> Tahsilat Girişi</h3>
+                <p>Müşteriden alınan ödemeleri girin ve borcu güncelleyin.</p>
+            </div>
+            
+            <div class="debt-detail-summary">
+                <p><strong>Müşteri:</strong> <span id="debtCustomerName">-</span></p>
+                <p><strong>Poliçe No:</strong> <span id="debtPolicyNo">-</span></p>
+                <p><strong>Toplam Tutar:</strong> <span id="debtTotalAmount">0,00 ₺</span></p>
+               <p><strong>Kalan Borç:</strong> <span id="debtRemainingAmount" style="color:var(--red-color); font-weight: 700;">0,00 ₺</span></p>
+            </div>
+
+            <div class="form-grid" style="grid-template-columns: 1fr 1fr auto; align-items: flex-end; margin-top: 20px;">
+                <div class="form-group">
+                    <label for="debtPaymentAmount">Tahsil Edilen Tutar</label>
+                    <div class="input-wrapper">
+                        <input type="text" id="debtPaymentAmount" placeholder="0,00" inputmode="decimal" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="debtPaymentDate">Tahsilat Tarihi</label>
+                    <input type="date" id="debtPaymentDate" />
+                </div>
+                <button id="addPaymentBtn"><i class="fas fa-plus"></i> Tahsilat Ekle</button>
+            </div>
+            
+            <h4 class="payment-history-title">Tahsilat Geçmişi</h4>
+            <div id="debtPaymentsContainer" style="max-height: 250px; overflow-y: auto;">
+                </div>
+
+            <div class="modal-actions">
+                <button id="closeDebtDetailBtn" class="secondary"><i class="fas fa-arrow-left"></i> Deftere Geri Dön</button>
+            </div>
+        </div>
+    </div>
+    <script type="module" src="js/script.js"></script>
+</body>
+</html>
