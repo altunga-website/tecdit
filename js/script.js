@@ -32,8 +32,8 @@ const db = getFirestore(app); // v9/v10 stili
 
 
 
-const ADMIN_USERNAME_ENCRYPTED = "YWRtaW4=";
-const ADMIN_PASSWORD_ENCRYPTED = "TWMxODA5ODM=";  
+const ADMIN_USERNAME_ENCRYPTED = "YWRtaW4=";      
+const ADMIN_PASSWORD_ENCRYPTED = "QWx0dW5nYTU4"; 
 
 
 
